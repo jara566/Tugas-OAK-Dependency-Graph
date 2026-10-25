@@ -1,0 +1,38 @@
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# (nama, dest, [sumber])
+prog = [
+    ("I1", "R1", ["R2", "R3"]),   # R1 = R2 + R3
+    ("I2", "R4", ["R1", "R5"]),   # R4 = R1 + R5 -> RAW (R1 dari I1)
+    ("I3", "R6", ["R4", "R1"]),   # R6 = R4 + R1 -> RAW (R4 dari I2, R1 dari I1)
+    ("I4", "R2", ["R7", "R8"]),   # independen
+]
+
+def detect_raw(prog):
+    deps = []
+    for j, (nj, _, srcj) in enumerate(prog):
+        for r in srcj:
+            for i in range(j - 1, -1, -1):
+                if prog[i][1] == r:
+                    deps.append((prog[i][0], nj, r))
+                    break
+    return deps
+
+raw = detect_raw(prog)
+for a, b, r in raw:
+    print(f"RAW: {b} membaca {r} yang ditulis {a}")
+
+G = nx.DiGraph()
+G.add_nodes_from(n for n, _, _ in prog)
+for a, b, r in raw:
+    G.add_edge(a, b, label=r)
+pos = {"I1": (0, 1), "I2": (1, 1), "I3": (2, 1), "I4": (1, 0)}
+nx.draw(G, pos, with_labels=True, node_size=1800,
+        node_color="lightblue", arrows=True,
+        connectionstyle="arc3,rad=0.2")
+nx.draw_networkx_edge_labels(G, pos,
+    edge_labels=nx.get_edge_attributes(G, "label"))
+plt.title("Dependency Graph - RAW")
+plt.savefig("raw_graph.png", dpi=200)
+plt.show()
