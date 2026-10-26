@@ -1,0 +1,40 @@
+# Contoh Simulasi Sederhana Deteksi WAR (Write After Read) Dependency
+
+def detect_war_hazard(instructions):
+    """
+    Fungsi untuk mendeteksi hazard WAR dari daftar instruksi sederhana.
+    Format instruksi: (pc, dest, src1, src2)
+    """
+    print("=== SIMULASI DETEKSI WAR (WRITE AFTER READ) ===")
+    read_registers = {} # Menyimpan register yang sedang dibaca oleh suatu instruksi
+    
+    for i, inst in enumerate(instructions):
+        pc, dest, src1, src2 = inst['pc'], inst['dest'], inst['src1'], inst['src2']
+        print(n f"\nInstruksi {pc}: {dest} = {src1} + {src2}")
+        
+        # Cek apakah instruksi saat ini menulis (dest) ke register yang sedang dibaca oleh instruksi sebelumnya
+        hazards = []
+        if dest in read_registers:
+            for prev_pc in read_registers[dest]:
+                hazards.append((dest, prev_pc))
+                
+        if hazards:
+            for reg, prev_pc in hazards:
+                print(f"  ⚠️ TERDETEKSI WAR HAZARD! Register '{reg}' ditulis oleh PC:{pc}, tapi masih dibaca oleh PC:{prev_pc}")
+        else:
+            print("  ✅ Aman dari WAR hazard langsung.")
+            
+        # Catat register apa saja yang dibaca oleh instruksi ini
+        for src in [src1, src2]:
+            if src not in read_registers:
+                read_registers[src] = []
+            read_registers[src].append(pc)
+
+# Daftar instruksi contoh yang mengandung WAR
+# (PC, Destination, Source 1, Source 2)
+sample_instructions = [
+    {'pc': 1, 'dest': 'R4', 'src1': 'R1', 'src2': 'R2'},  # I1: membaca R1
+    {'pc': 2, 'dest': 'R1', 'src1': 'R3', 'src2': 'R5'},  # I2: menulis ke R1 (WAR pada R1!)
+]
+
+detect_war_hazard(sample_instructions)
